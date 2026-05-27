@@ -1,0 +1,16 @@
+{
+  "name": "project-backend",
+  "version": "1.0.0",
+  "description": "a backend project to understand what happens in an industrial grade project",
+  "keywords": [
+    "javascript",
+    "backend"
+  ],
+  "license": "ISC",
+  "author": "Shubhnedu S Acharya",
+  "type": "modulejs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
