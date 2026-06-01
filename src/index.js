@@ -12,15 +12,17 @@ const app = express();
 // middleware
 app.use(express.json());
 
-connectDB().then(() => {
-  app.listen(process.env.PORT, () => {
-    console.log(`Server running on port ${process.env.PORT}`);
+connectDB()
+  .then(() => {
+    app.listen(process.env.PORT || 8000, () => {
+      console.log(`Server running on port ${process.env.PORT || 8000}`);
+    });
+  })
+  .catch((error) => {
+    console.log("Database connection failed:", error);
+    process.exit(1);
   });
-}).catch((error) => {
-  console.log("Database connection failed:", error);
-  process.exit(1);
-});
-export default connectDB;
+
 
 
 
