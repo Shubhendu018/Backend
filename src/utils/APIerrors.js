@@ -7,10 +7,10 @@ class apiError extends Error{
 ){
   super(message);
   this.statusCode=statusCode;
-  this.data=data;
+  this.data=error;
   this.message=message;
-  this .success=false;
-  this.errors=errors;
+  this.success=false;
+  this.errors=error;
 
   if(stack){
     this.stack=stack;
