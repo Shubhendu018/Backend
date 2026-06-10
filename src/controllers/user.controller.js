@@ -3,6 +3,7 @@ import {apiError} from "../utils/APIerrors.js";
 import{User} from "../models/user.model.js";
 import {uploadOnCloudinary} from "../utils/cloudinary.js";
 import {apiResponse} from "../utils/apiResponse.js";
+import jwt from "jsonwebtoken";
 import fs from "fs";
 
 
@@ -21,7 +22,7 @@ const generateAccessAndRefreshTokens=async(userId)=>{
 }
 
 const cleanupFiles = (...paths) => {
-  paths.forEach(path => { if (path) fs.unlinkSync(path); });
+  paths.forEach(path => { if (path && fs.existsSync(path)) fs.unlinkSync(path); });
 };
 const registerUser=asyncHandler(async(req,res)=>{
   //get user data from req.body
@@ -47,9 +48,10 @@ const registerUser=asyncHandler(async(req,res)=>{
   if(existingUser){
     throw new apiError(409,"User already exists");
   }
- // console.log(req.files);
- //console.log(req.body);
-
+ //
+console.log("files:", req.files);
+console.log("body:", req.body);
+// line 53
   const avatarLocalPath = req.files?.avatar?.[0]?.path;
   const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
   if(!avatarLocalPath){
@@ -126,7 +128,7 @@ const loginUser=asyncHandler(async(req,res)=>{
   )
 });
  const logOutUser=asyncHandler(async(req,res)=>{
-  await User.findByIdAndUpdate(req.user.__id || req.user._id, { $set: { refreshToken: undefined } }, { new: true, runValidators: false }).select("-password -refreshToken");
+  await User.findByIdAndUpdate(req.user._id, { $set: { refreshToken: undefined } }, { new: true, runValidators: false }).select("-password -refreshToken");
 
   const options={
     httpOnly:true,
@@ -141,8 +143,39 @@ const loginUser=asyncHandler(async(req,res)=>{
     new apiResponse(200,"User logged out successfully")
   )  
 });
+
+const refreshAccessToken=asyncHandler(async(req,res)=>{
+  const incomingRefreshToken=req.cookies.refreshToken||req.body.refreshToken;
+  if(!incomingRefreshToken){
+    throw new apiError(401,"Refresh token is required");
+  }
+  try{
+    const decodedToken=jwt.verify(incomingRefreshToken,process.env.REFRESH_TOKEN_SECRET);
+  const user=await User.findById(decodedToken?.userId);
+  if(!user){
+    throw new apiError(404,"User not found");
+  }   
+  if(user.refreshToken!==incomingRefreshToken){
+    throw new apiError(401,"Invalid refresh token");
+  } 
+  const options={
+    httpOnly:true,
+    secure:true
+  }
+  const { accessToken, newRefreshToken } = await generateAccessAndRefreshTokens(user._id);
+  return res.status(200).cookie("accessToken", accessToken, options).cookie("refreshToken", newRefreshToken, options).json(
+    new apiResponse(200,{
+      accessToken,
+      refreshToken: newRefreshToken  
+    },"Access token refreshed successfully")
+  )}catch(error){
+    throw new apiError(401,error?.message || "Invalid refresh token");
+  }
+});
+
 export {
   registerUser,
   loginUser,
+  refreshAccessToken,
   logOutUser
 };
