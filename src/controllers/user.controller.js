@@ -283,7 +283,7 @@ const channel= await User.aggregate([
     $lookup:{
       from:"Subscription",
       localField:"_id",
-      forgienField:"channel",
+      foreignField:"channel",
       as:"subscribers"
     
     }
@@ -292,7 +292,7 @@ const channel= await User.aggregate([
     $lookup:{
       from:"Subscription",
       localField:"_id",
-      forgienField:"subscriber",
+      foreignField:"subscriber",
       as:"subscribedTo"
     }
   },
@@ -348,7 +348,7 @@ const getWatchHistory= asyncHandler(async(req,res)=>{
       $lookup:{
         from:"Videos",
         localField:"watchHistory",
-        forgienField:"_id",
+        foreignField:"_id",
         as:"watchHistory",
         pipeline:[{
           $lookup:{
